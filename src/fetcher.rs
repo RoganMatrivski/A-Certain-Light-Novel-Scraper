@@ -1,12 +1,25 @@
 use scraper::{Html, Selector};
 use serde::Serialize;
+use worker::{Fetch, Request, RequestInit};
 
-pub async fn get_html(url: impl AsRef<str>) -> Result<String, gloo_net::Error> {
-    gloo_net::http::Request::get(url.as_ref())
-        .send()
-        .await?
-        .text()
-        .await
+pub async fn get_html(url: impl AsRef<str>) -> Result<String, anyhow::Error> {
+    let cache = worker::Cache::default();
+    let url = url.as_ref();
+
+    let mut res = if let Some(cached) = cache.get(url, false).await? {
+        tracing::trace!("Cache HIT for {url}");
+        cached
+    } else {
+        let req = Request::new_with_init(url, &RequestInit::new())?;
+        let mut res = Fetch::Request(req).send().await?;
+
+        res.headers_mut().set("Cache-Control", "max-age=60")?; // cache for 60 seconds
+        cache.put(url, res.cloned()?).await?;
+
+        res
+    };
+
+    Ok(res.text().await?)
 }
 
 #[derive(Debug, Serialize)]
