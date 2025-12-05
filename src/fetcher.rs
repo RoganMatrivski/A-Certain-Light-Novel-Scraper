@@ -14,7 +14,9 @@ pub async fn get_html(url: impl AsRef<str>) -> Result<String, anyhow::Error> {
         let mut res = Fetch::Request(req).send().await?;
         let mut cloned_res = res.cloned()?;
 
-        cloned_res.headers_mut().set("Cache-Control", "max-age=60")?; // cache for 60 seconds
+        cloned_res
+            .headers_mut()
+            .set("Cache-Control", "max-age=60")?; // cache for 60 seconds
         cache.put(url, cloned_res.cloned()?).await?;
 
         res

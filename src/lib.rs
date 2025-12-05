@@ -99,7 +99,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .run(req.clone().expect("Failed to clone request"), env)
         .await?;
 
-    res.headers_mut().set("Cache-Control", "max-age=120")?;
+    res.headers_mut().set("Cache-Control", "max-age=60")?;
     if let Ok(res) = res.cloned() {
         cache.put(&req, res).await?;
     }
